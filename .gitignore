@@ -1,0 +1,6 @@
+.nvim-watcher/
+*.log
+*.jsonl
+.DS_Store
+test.py
+DESIGN.md
