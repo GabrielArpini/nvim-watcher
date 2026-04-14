@@ -27,8 +27,21 @@ require('nvim-watcher').setup({
     url = 'http://localhost:11434',
     timeout_ms = 10000,
   },
+  privacy = {
+    extra_ignore_patterns = {},  -- globs, in addition to built-in defaults
+    redact = true,               -- replace obvious secrets before sending
+    strict = false,              -- if true, refuse to send any file with redaction hits
+  },
 })
 ```
+
+Files matching secrets-like globs (`.env*`, `*.key`, `**/secrets/**`,
+`**/.ssh/**`, cloud credentials, etc.) are never sent to the model.
+When `redact = true` (default), buffer content is scanned before
+sending for AWS keys, GitHub tokens, JWTs, private key blocks, and
+`api_key`/`token`/`secret`/`password` assignments, and those matches
+are replaced with `[REDACTED:kind]`. With `strict = true`, any
+redaction hit blocks the whole file instead of just redacting.
 
 When the idle trigger fires, the plugin first looks for an LSP
 diagnostic near the cursor. If nothing qualifies and a model is

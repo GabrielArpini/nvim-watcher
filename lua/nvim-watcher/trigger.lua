@@ -2,6 +2,7 @@ local popup = require('nvim-watcher.popup')
 local log = require('nvim-watcher.log')
 local diagnostics = require('nvim-watcher.diagnostics')
 local model = require('nvim-watcher.model')
+local privacy = require('nvim-watcher.privacy')
 
 local M = {}
 
@@ -38,17 +39,42 @@ local function build_model_ctx()
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local cursor = vim.api.nvim_win_get_cursor(0)
+  local file = vim.fn.expand('%:.')
+  local raw_code = table.concat(lines, '\n')
+  local code = raw_code
+  local redaction_count = 0
+  if privacy.should_redact() then
+    code, redaction_count = privacy.redact(raw_code)
+  end
   return {
-    file = vim.fn.expand('%:.'),
+    file = file,
     lang = vim.bo[bufnr].filetype,
-    code = table.concat(lines, '\n'),
+    code = code,
     cursor_line = cursor[1],
+    redaction_count = redaction_count,
   }
 end
 
 local function try_model()
   if not model.is_enabled() then return end
+
+  local file = vim.fn.expand('%:.')
+  local blocked, matched = privacy.is_blocked_path(file)
+  if blocked then
+    log.append({ event = 'privacy_blocked_path', file = file, pattern = matched })
+    return
+  end
+
   local ctx = build_model_ctx()
+
+  if ctx.redaction_count > 0 then
+    if privacy.is_strict() then
+      log.append({ event = 'privacy_blocked_content', file = file, redactions = ctx.redaction_count })
+      return
+    end
+    log.append({ event = 'privacy_redacted', file = file, redactions = ctx.redaction_count })
+  end
+
   model.query(ctx, function(result, err)
     if err then
       log.append({ event = 'trigger_fired_silent', cause = 'model_error', err = err })

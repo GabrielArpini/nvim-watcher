@@ -2,6 +2,7 @@ local trigger = require('nvim-watcher.trigger')
 local memory = require('nvim-watcher.memory')
 local popup = require('nvim-watcher.popup')
 local model = require('nvim-watcher.model')
+local privacy = require('nvim-watcher.privacy')
 
 local M = {}
 
@@ -15,6 +16,7 @@ function M.setup(opts)
   memory.setup({ scope = opts.memory_scope or 'local' })
   popup.setup({ keymap_prefix = opts.keymap_prefix })
   model.setup(opts.model or {})
+  privacy.setup(opts.privacy or {})
   trigger.setup(opts)
 
   vim.api.nvim_create_user_command('WatcherTrigger', function()
