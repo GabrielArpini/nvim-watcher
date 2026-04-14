@@ -62,6 +62,12 @@ one action it is applied silently, multiple actions open the standard
 picker, and "No code actions available" is shown when there is
 nothing to do.
 
+If you dismiss a popup without acting on it (Esc, typing, leaving
+insert), the same diagnostic (matched by source, message, and line)
+will not re-open until its identity changes or you explicitly apply,
+consent, or negate. `:WatcherTrigger` always clears this and forces
+a fresh popup.
+
 ## Not goals
 
 No chat. No autocomplete. No PR reviews. If you want those, use a different plugin.
