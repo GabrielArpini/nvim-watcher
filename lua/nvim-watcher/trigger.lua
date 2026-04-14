@@ -3,6 +3,7 @@ local log = require('nvim-watcher.log')
 local diagnostics = require('nvim-watcher.diagnostics')
 local model = require('nvim-watcher.model')
 local privacy = require('nvim-watcher.privacy')
+local dedupe = require('nvim-watcher.dedupe')
 
 local M = {}
 
@@ -27,6 +28,9 @@ local function build_lsp_opts()
   local line = cursor[1] - 1
   local d = diagnostics.pick_nearest(bufnr, line)
   if not d then return nil end
+  if dedupe.should_suppress(d) then
+    return nil, 'suppressed_duplicate'
+  end
   return {
     question = d.message,
     reasoning = string.format('LSP (%s, severity=%s) at line %d', d.source, d.severity, d.lnum + 1),
@@ -97,10 +101,14 @@ end
 local function fire()
   state.timer = nil
   state.dirty = false
-  local lsp_opts = build_lsp_opts()
+  local lsp_opts, suppress = build_lsp_opts()
   if lsp_opts then
     log.append({ event = 'trigger_fired', cause = 'idle_after_insert_edit', source = lsp_opts.source })
     vim.schedule(function() popup.open(lsp_opts) end)
+    return
+  end
+  if suppress then
+    log.append({ event = 'trigger_fired_silent', cause = suppress })
     return
   end
   if model.is_enabled() then
@@ -154,6 +162,7 @@ end
 function M.summon()
   cancel_timer()
   state.dirty = false
+  dedupe.reset()
   local lsp_opts = build_lsp_opts()
   if lsp_opts then
     log.append({ event = 'trigger_fired', cause = 'manual_summon', source = lsp_opts.source })

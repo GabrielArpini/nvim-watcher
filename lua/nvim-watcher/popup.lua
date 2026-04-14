@@ -1,6 +1,7 @@
 local log = require('nvim-watcher.log')
 local memory = require('nvim-watcher.memory')
 local actions = require('nvim-watcher.actions')
+local dedupe = require('nvim-watcher.dedupe')
 
 local M = {}
 
@@ -82,6 +83,10 @@ local function respond(action, extra)
   if action == 'apply' or action == 'consent' or action == 'negate' then
     local reason = (action == 'negate' and extra and extra.reason) or nil
     write_memory(action, opts, reason)
+  end
+
+  if opts and opts.source == 'lsp_diagnostic' and opts.diagnostic then
+    dedupe.remember(opts.diagnostic, action)
   end
 
   local do_after_close
