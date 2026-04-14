@@ -1,0 +1,13 @@
+nvim-watcher
+============
+
+This product includes treesitter tag query files (queries/**/tags.scm)
+derived from the aider project (https://github.com/Aider-AI/aider),
+which is licensed under the Apache License, Version 2.0.
+
+A copy of the Apache License is available at:
+https://www.apache.org/licenses/LICENSE-2.0
+
+The tag query files are used without modification to identify
+definitions and references in source code for repository context
+extraction. No other portion of aider is incorporated or used.
