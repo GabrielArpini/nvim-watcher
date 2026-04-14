@@ -56,6 +56,12 @@ Or use `:WatcherApply`, `:WatcherConsent`, `:WatcherNegate`,
 `:WatcherIgnore`. User responses go to `.nvim-watcher/memory.jsonl`
 (local scope) or `~/.config/nvim-watcher/memory.jsonl` (global scope).
 
+When the popup shows an LSP diagnostic, Apply runs the corresponding
+LSP code action for that diagnostic. If the server returns exactly
+one action it is applied silently, multiple actions open the standard
+picker, and "No code actions available" is shown when there is
+nothing to do.
+
 ## Not goals
 
 No chat. No autocomplete. No PR reviews. If you want those, use a different plugin.

@@ -32,6 +32,7 @@ local function build_lsp_opts()
     reasoning = string.format('LSP (%s, severity=%s) at line %d', d.source, d.severity, d.lnum + 1),
     source = 'lsp_diagnostic',
     diagnostic = d,
+    bufnr = bufnr,
   }
 end
 

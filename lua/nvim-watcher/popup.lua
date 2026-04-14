@@ -1,5 +1,6 @@
 local log = require('nvim-watcher.log')
 local memory = require('nvim-watcher.memory')
+local actions = require('nvim-watcher.actions')
 
 local M = {}
 
@@ -48,13 +49,30 @@ local function build_context(opts)
   }
   if opts.diagnostic then
     ctx.lnum = opts.diagnostic.lnum
-    ctx.diagnostic = opts.diagnostic
+    ctx.diagnostic = {
+      message = opts.diagnostic.message,
+      source = opts.diagnostic.source,
+      severity = opts.diagnostic.severity,
+      lnum = opts.diagnostic.lnum,
+    }
   end
   return ctx
 end
 
+local function write_memory(action, opts, reason)
+  local entry = {
+    action = action,
+    context = opts and build_context(opts) or nil,
+  }
+  if reason and reason ~= '' then
+    entry.reason = reason
+  end
+  memory.append(entry)
+end
+
 local function respond(action, extra)
   if not M.is_open() then return end
+  local opts = state.current_opts
   local event = { event = 'response', action = action }
   if extra then
     for k, v in pairs(extra) do event[k] = v end
@@ -62,17 +80,23 @@ local function respond(action, extra)
   log.append(event)
 
   if action == 'apply' or action == 'consent' or action == 'negate' then
-    local entry = {
-      action = action,
-      context = state.current_opts and build_context(state.current_opts) or nil,
-    }
-    if action == 'negate' and extra and extra.reason then
-      entry.reason = extra.reason
+    local reason = (action == 'negate' and extra and extra.reason) or nil
+    write_memory(action, opts, reason)
+  end
+
+  local do_after_close
+  if action == 'apply' and opts and opts.source == 'lsp_diagnostic' and opts.diagnostic and opts.diagnostic.raw then
+    local raw = opts.diagnostic.raw
+    local bufnr = opts.bufnr or 0
+    do_after_close = function()
+      actions.apply_lsp(raw, bufnr)
     end
-    memory.append(entry)
   end
 
   close()
+  if do_after_close then
+    vim.schedule(do_after_close)
+  end
 end
 
 local function do_apply() respond('apply') end
@@ -122,6 +146,7 @@ end
 function M.open(opts)
   if M.is_open() then return end
   opts = opts or {}
+  opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   local question = opts.question or 'This is a placeholder question about your code.'
   local reasoning = opts.reasoning or 'Placeholder reasoning: model would explain why it flagged this.'
 

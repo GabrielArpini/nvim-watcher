@@ -26,6 +26,8 @@ function M.pick_nearest(bufnr, cursor_line)
     source = d.source or 'lsp',
     severity = severity_name[d.severity] or tostring(d.severity),
     lnum = d.lnum,
+    raw = d,
+    bufnr = bufnr,
   }
 end
 
