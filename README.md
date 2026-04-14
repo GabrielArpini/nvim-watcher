@@ -32,8 +32,31 @@ require('nvim-watcher').setup({
     redact = true,               -- replace obvious secrets before sending
     strict = false,              -- if true, refuse to send any file with redaction hits
   },
+  skeleton = {
+    enabled = true,
+    max_tokens = 2000,           -- rough cap on the repo-context blob
+    max_files = 2000,            -- repos larger than this skip the skeleton build
+  },
 })
 ```
+
+## Repo skeleton
+
+On first trigger the plugin walks `git ls-files`, extracts symbol
+definitions and references via treesitter tag queries, builds a
+reference graph between files, and runs personalized PageRank biased
+toward the current buffer. Top-ranked symbols are packed into a
+`max_tokens`-budget outline and prepended to every model prompt as
+`Repo context:`. Per-file tags are cached by mtime and rebuilt
+incrementally on `BufWritePost`.
+
+Commands:
+- `:WatcherSkeleton` opens the current skeleton in a split.
+- `:WatcherRebuildSkeleton` forces a full rebuild and prints elapsed
+  time.
+
+Tag query files under `queries/` are vendored from
+[aider](https://github.com/Aider-AI/aider) (Apache-2.0). See NOTICE.
 
 Files matching secrets-like globs (`.env*`, `*.key`, `**/secrets/**`,
 `**/.ssh/**`, cloud credentials, etc.) are never sent to the model.

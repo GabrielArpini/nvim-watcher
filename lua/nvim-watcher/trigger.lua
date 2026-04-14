@@ -4,6 +4,7 @@ local diagnostics = require('nvim-watcher.diagnostics')
 local model = require('nvim-watcher.model')
 local privacy = require('nvim-watcher.privacy')
 local dedupe = require('nvim-watcher.dedupe')
+local skeleton = require('nvim-watcher.skeleton')
 
 local M = {}
 
@@ -51,13 +52,20 @@ local function build_model_ctx()
   if privacy.should_redact() then
     code, redaction_count = privacy.redact(raw_code)
   end
-  return {
+  local ctx = {
     file = file,
     lang = vim.bo[bufnr].filetype,
     code = code,
     cursor_line = cursor[1],
     redaction_count = redaction_count,
   }
+  if skeleton.is_enabled() then
+    local ok, text = pcall(skeleton.get_skeleton, { current_file = file })
+    if ok and text then
+      ctx.repo_skeleton = text
+    end
+  end
+  return ctx
 end
 
 local function try_model()

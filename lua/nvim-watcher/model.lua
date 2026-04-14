@@ -45,8 +45,13 @@ local function build_prompt(ctx)
     code = code:sub(1, config.max_context_chars)
     truncated = true
   end
+  local skeleton_section = ''
+  if ctx.repo_skeleton and ctx.repo_skeleton ~= '' then
+    skeleton_section = ctx.repo_skeleton .. '\n\n'
+  end
   local user = string.format(
-    'File: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
+    '%sFile: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
+    skeleton_section,
     ctx.file or '(scratch)',
     ctx.lang or 'text',
     ctx.cursor_line or 1,
