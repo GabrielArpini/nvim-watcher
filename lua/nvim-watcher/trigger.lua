@@ -1,6 +1,7 @@
 local popup = require('nvim-watcher.popup')
 local log = require('nvim-watcher.log')
 local diagnostics = require('nvim-watcher.diagnostics')
+local model = require('nvim-watcher.model')
 
 local M = {}
 
@@ -33,16 +34,53 @@ local function build_lsp_opts()
   }
 end
 
+local function build_model_ctx()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  return {
+    file = vim.fn.expand('%:.'),
+    lang = vim.bo[bufnr].filetype,
+    code = table.concat(lines, '\n'),
+    cursor_line = cursor[1],
+  }
+end
+
+local function try_model()
+  if not model.is_enabled() then return end
+  local ctx = build_model_ctx()
+  model.query(ctx, function(result, err)
+    if err then
+      log.append({ event = 'trigger_fired_silent', cause = 'model_error', err = err })
+      return
+    end
+    if not result then
+      log.append({ event = 'trigger_fired_silent', cause = 'model_none' })
+      return
+    end
+    log.append({ event = 'trigger_fired', cause = 'model_flagged', source = 'model' })
+    popup.open({
+      question = result.question,
+      reasoning = result.reasoning,
+      source = 'model',
+    })
+  end)
+end
+
 local function fire()
   state.timer = nil
   state.dirty = false
-  local opts = build_lsp_opts()
-  if not opts then
-    log.append({ event = 'trigger_fired_silent', cause = 'no_diagnostic' })
+  local lsp_opts = build_lsp_opts()
+  if lsp_opts then
+    log.append({ event = 'trigger_fired', cause = 'idle_after_insert_edit', source = lsp_opts.source })
+    vim.schedule(function() popup.open(lsp_opts) end)
     return
   end
-  log.append({ event = 'trigger_fired', cause = 'idle_after_insert_edit', source = opts.source })
-  vim.schedule(function() popup.open(opts) end)
+  if model.is_enabled() then
+    try_model()
+  else
+    log.append({ event = 'trigger_fired_silent', cause = 'no_diagnostic' })
+  end
 end
 
 local function restart_timer()
@@ -89,14 +127,19 @@ end
 function M.summon()
   cancel_timer()
   state.dirty = false
-  local opts = build_lsp_opts()
-  if not opts then
-    log.append({ event = 'manual_summon_silent', cause = 'no_diagnostic' })
-    vim.notify('nvim-watcher: nothing to flag here', vim.log.levels.INFO)
+  local lsp_opts = build_lsp_opts()
+  if lsp_opts then
+    log.append({ event = 'trigger_fired', cause = 'manual_summon', source = lsp_opts.source })
+    popup.open(lsp_opts)
     return
   end
-  log.append({ event = 'trigger_fired', cause = 'manual_summon', source = opts.source })
-  popup.open(opts)
+  if model.is_enabled() then
+    log.append({ event = 'manual_summon_model' })
+    try_model()
+    return
+  end
+  log.append({ event = 'manual_summon_silent', cause = 'no_diagnostic' })
+  vim.notify('nvim-watcher: nothing to flag here', vim.log.levels.INFO)
 end
 
 return M

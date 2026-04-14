@@ -20,8 +20,22 @@ require('nvim-watcher').setup({
   idle_ms = 7000,
   memory_scope = 'local',   -- or 'global'
   keymap_prefix = '<leader>w',
+  model = {
+    enabled = true,
+    provider = 'ollama',
+    name = 'qwen2.5:0.5b',
+    url = 'http://localhost:11434',
+    timeout_ms = 10000,
+  },
 })
 ```
+
+When the idle trigger fires, the plugin first looks for an LSP
+diagnostic near the cursor. If nothing qualifies and a model is
+configured, it asks the model. The model is instructed to stay silent
+unless there is a concrete concern.
+
+Requires `ollama serve` running locally with the named model pulled.
 
 When a popup is open, respond from anywhere with `<leader>wa` (apply),
 `<leader>wc` (consent), `<leader>wn` (negate), `<leader>wi` (ignore).
