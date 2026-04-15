@@ -25,24 +25,41 @@ local function check_binaries()
   end
 end
 
-local function check_ollama()
-  start('nvim-watcher: model (ollama)')
+local function check_model()
+  start('nvim-watcher: model')
   local model_mod = require('nvim-watcher.model')
   if not model_mod.is_enabled() then
     info('model disabled in config (model.enabled = false)')
     return
   end
-  if not has('curl') then
-    err('curl required for ollama calls')
-    return
+  local cfg = model_mod.config and model_mod.config() or {}
+  local provider = cfg.provider or 'ollama'
+  if provider == 'ollama' then
+    if not has('curl') then
+      err('curl required for ollama calls')
+      return
+    end
+    local url = (cfg.url or 'http://localhost:11434') .. '/api/tags'
+    local res = vim.fn.system({ 'curl', '-s', '--max-time', '2', url })
+    if vim.v.shell_error ~= 0 or res == '' then
+      err('ollama not reachable (is `ollama serve` running?)')
+      return
+    end
+    ok('ollama reachable')
+  else
+    info('provider: ' .. provider)
+    local env = cfg.api_key_env
+    if not env or env == '' then
+      err('model.api_key_env not set for provider ' .. provider)
+      return
+    end
+    local key = vim.env[env] or os.getenv(env)
+    if not key or key == '' then
+      err('env var ' .. env .. ' is empty')
+      return
+    end
+    ok('api key present in ' .. env)
   end
-  local url = 'http://localhost:11434/api/tags'
-  local res = vim.fn.system({ 'curl', '-s', '--max-time', '2', url })
-  if vim.v.shell_error ~= 0 or res == '' then
-    err('ollama not reachable at localhost:11434 (is `ollama serve` running?)')
-    return
-  end
-  ok('ollama reachable at localhost:11434')
 end
 
 local function check_treesitter()
@@ -90,7 +107,7 @@ end
 
 function M.check()
   check_binaries()
-  check_ollama()
+  check_model()
   check_treesitter()
   check_queries()
   check_storage()

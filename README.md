@@ -25,10 +25,12 @@ require('nvim-watcher').setup({
   keymap_prefix = '<leader>w',
   model = {
     enabled = true,
-    provider = 'ollama',
+    provider = 'ollama',         -- 'ollama' | 'openai' | 'openrouter' | 'anthropic'
     name = 'qwen2.5:0.5b',
-    url = 'http://localhost:11434',
+    url = 'http://localhost:11434', -- override for openrouter or self-hosted
     timeout_ms = 10000,
+    -- api_key_env = 'OPENAI_API_KEY', -- for non-ollama providers
+    -- max_tokens = 256,
   },
   privacy = {
     extra_ignore_patterns = {},  -- globs, in addition to built-in defaults

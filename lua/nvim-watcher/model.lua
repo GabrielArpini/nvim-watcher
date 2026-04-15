@@ -13,6 +13,8 @@ local config = {
   url = 'http://localhost:11434',
   timeout_ms = 10000,
   max_context_chars = 4000,
+  api_key_env = nil,
+  max_tokens = 256,
 }
 
 local SYSTEM_PROMPT = [[You are a code reviewer watching a developer write code in real time.
@@ -106,15 +108,14 @@ local function parse_response(text)
   return { question = question, reasoning = reasoning }
 end
 
-local function call_ollama(prompt, on_done)
-  local body = vim.fn.json_encode({
-    model = config.name,
-    system = SYSTEM_PROMPT,
-    prompt = prompt,
-    stream = false,
-    options = { temperature = 0.2 },
-  })
-  local url = config.url .. '/api/generate'
+local function get_api_key()
+  if not config.api_key_env then
+    return nil
+  end
+  return vim.env[config.api_key_env] or os.getenv(config.api_key_env)
+end
+
+local function do_curl(url, headers, body, on_done)
   local cmd = {
     'curl',
     '-s',
@@ -125,9 +126,13 @@ local function call_ollama(prompt, on_done)
     url,
     '-H',
     'Content-Type: application/json',
-    '-d',
-    body,
   }
+  for _, h in ipairs(headers or {}) do
+    table.insert(cmd, '-H')
+    table.insert(cmd, h)
+  end
+  table.insert(cmd, '-d')
+  table.insert(cmd, body)
   local started_at = vim.uv.hrtime()
   vim.system(cmd, { text = true }, function(res)
     local latency_ms = math.floor((vim.uv.hrtime() - started_at) / 1e6)
@@ -145,28 +150,111 @@ local function call_ollama(prompt, on_done)
         return
       end
       local raw = res.stdout or ''
-      if raw:match('rate') and raw:match('limit') then
+      if raw:match('"error"') and raw:lower():match('rate') and raw:lower():match('limit') then
         status.set('rate_limited')
       else
         status.set('idle')
       end
-      local ok, decoded = pcall(vim.fn.json_decode, res.stdout or '')
+      local ok, decoded = pcall(vim.fn.json_decode, raw)
       if not ok or type(decoded) ~= 'table' then
-        log.append({
-          event = 'model_error',
-          stage = 'decode',
-          raw = res.stdout,
-          latency_ms = latency_ms,
-        })
+        log.append({ event = 'model_error', stage = 'decode', raw = raw, latency_ms = latency_ms })
         on_done(nil, 'decode failure')
         return
       end
-      local text = decoded.response or ''
-      last.response = text
-      log.append({ event = 'model_response', raw = text, latency_ms = latency_ms })
-      on_done(text, nil)
+      log.append({ event = 'model_response_raw', latency_ms = latency_ms })
+      on_done(decoded, nil)
     end)
   end)
+end
+
+local function call_ollama(prompt, on_done)
+  local body = vim.fn.json_encode({
+    model = config.name,
+    system = SYSTEM_PROMPT,
+    prompt = prompt,
+    stream = false,
+    options = { temperature = 0.2 },
+  })
+  local url = config.url .. '/api/generate'
+  do_curl(url, {}, body, function(decoded, err)
+    if err then
+      on_done(nil, err)
+      return
+    end
+    local text = decoded.response or ''
+    last.response = text
+    on_done(text, nil)
+  end)
+end
+
+local function call_openai(prompt, on_done)
+  local key = get_api_key()
+  if not key or key == '' then
+    on_done(nil, 'api_key missing (set env var named by model.api_key_env)')
+    return
+  end
+  local url = (config.url or 'https://api.openai.com') .. '/v1/chat/completions'
+  local body = vim.fn.json_encode({
+    model = config.name,
+    temperature = 0.2,
+    max_tokens = config.max_tokens,
+    messages = {
+      { role = 'system', content = SYSTEM_PROMPT },
+      { role = 'user', content = prompt },
+    },
+  })
+  do_curl(url, { 'Authorization: Bearer ' .. key }, body, function(decoded, err)
+    if err then
+      on_done(nil, err)
+      return
+    end
+    local choices = decoded.choices or {}
+    local text = choices[1] and choices[1].message and choices[1].message.content or ''
+    last.response = text
+    on_done(text, nil)
+  end)
+end
+
+local function call_anthropic(prompt, on_done)
+  local key = get_api_key()
+  if not key or key == '' then
+    on_done(nil, 'api_key missing (set env var named by model.api_key_env)')
+    return
+  end
+  local url = (config.url or 'https://api.anthropic.com') .. '/v1/messages'
+  local body = vim.fn.json_encode({
+    model = config.name,
+    max_tokens = config.max_tokens,
+    temperature = 0.2,
+    system = SYSTEM_PROMPT,
+    messages = { { role = 'user', content = prompt } },
+  })
+  do_curl(
+    url,
+    { 'x-api-key: ' .. key, 'anthropic-version: 2023-06-01' },
+    body,
+    function(decoded, err)
+      if err then
+        on_done(nil, err)
+        return
+      end
+      local content = decoded.content or {}
+      local text = content[1] and content[1].text or ''
+      last.response = text
+      on_done(text, nil)
+    end
+  )
+end
+
+local function dispatch(prompt, on_done)
+  if config.provider == 'ollama' then
+    return call_ollama(prompt, on_done)
+  elseif config.provider == 'openai' or config.provider == 'openrouter' then
+    return call_openai(prompt, on_done)
+  elseif config.provider == 'anthropic' then
+    return call_anthropic(prompt, on_done)
+  end
+  on_done(nil, 'unknown provider: ' .. tostring(config.provider))
 end
 
 function M.query(ctx, callback)
@@ -198,7 +286,7 @@ function M.query(ctx, callback)
       )
     end)
   end
-  call_ollama(prompt, function(raw, err)
+  dispatch(prompt, function(raw, err)
     if err then
       callback(nil, err)
       return
@@ -210,6 +298,10 @@ end
 
 function M.last()
   return last
+end
+
+function M.config()
+  return vim.deepcopy(config)
 end
 
 return M

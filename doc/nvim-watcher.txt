@@ -116,9 +116,13 @@ keymap_prefix (string, default "<leader>w")
                                                     *nvim-watcher-model*
 model (table)
     enabled       boolean, default false
-    provider      "ollama" (only supported provider for now)
-    name          model name passed to ollama
-    url           ollama server URL
+    provider      "ollama" | "openai" | "openrouter" | "anthropic"
+    name          model name passed to the provider
+    url           override base URL (defaults: ollama localhost,
+                  openai api.openai.com, anthropic api.anthropic.com).
+                  For openrouter, set url = "https://openrouter.ai/api".
+    api_key_env   env var name holding the key (non-ollama providers)
+    max_tokens    cap on response length (non-ollama), default 256
     timeout_ms    curl timeout
 
                                                *nvim-watcher-diff_review*
