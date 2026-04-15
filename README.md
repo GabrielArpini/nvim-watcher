@@ -1,3 +1,5 @@
+[![ci](https://github.com/GabrielArpini/nvim-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/GabrielArpini/nvim-watcher/actions/workflows/ci.yml)
+
 # nvim-watcher
 
 *No bullshit code companion.*
