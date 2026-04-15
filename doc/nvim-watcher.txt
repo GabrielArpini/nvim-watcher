@@ -60,6 +60,10 @@ CONTENTS                                           *nvim-watcher-contents*
 :WatcherIgnore         Dismiss without recording. The same diagnostic will
                        not re-open until its identity changes.
 
+                                                         *:WatcherMemory*
+:WatcherMemory         Open a split summarizing memory: per-action totals,
+                       grouped counts per question, and recent entries.
+
                                                        *:WatcherSkeleton*
 :WatcherSkeleton       Open the current repo skeleton in a split.
 

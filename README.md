@@ -91,6 +91,12 @@ will not re-open until its identity changes or you explicitly apply,
 consent, or negate. `:WatcherTrigger` always clears this and forces
 a fresh popup.
 
+## Memory browser
+
+`:WatcherMemory` opens a split summarizing local + global memory: total
+counts per action, grouped counts per question, and the 20 most recent
+entries with their reasons.
+
 ## Health check
 
 Run `:checkhealth nvim-watcher` to verify curl, git, ollama

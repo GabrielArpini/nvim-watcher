@@ -72,6 +72,10 @@ function M.setup(opts)
     end, { desc = 'nvim-watcher: ' .. key })
   end
 
+  vim.api.nvim_create_user_command('WatcherMemory', function()
+    require('nvim-watcher.browser').open()
+  end, { desc = 'nvim-watcher: browse memory' })
+
   action_cmd('WatcherApply', 'apply')
   action_cmd('WatcherConsent', 'consent')
   action_cmd('WatcherNegate', 'negate')
