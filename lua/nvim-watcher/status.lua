@@ -9,7 +9,6 @@ local STATES = {
 }
 
 local state = 'disabled'
-local since = 0
 
 function M.set(new_state)
   if not STATES[new_state] then
@@ -19,7 +18,6 @@ function M.set(new_state)
     return
   end
   state = new_state
-  since = vim.uv.hrtime()
   vim.schedule(function()
     pcall(vim.cmd, 'redrawstatus')
   end)

@@ -50,13 +50,6 @@ local function file_mtime(path)
   return stat and stat.mtime and stat.mtime.sec or 0
 end
 
-local function rel(path, root)
-  if path:sub(1, #root + 1) == root .. '/' then
-    return path:sub(#root + 2)
-  end
-  return path
-end
-
 function M.build()
   local root = repo_root()
   state.root = root

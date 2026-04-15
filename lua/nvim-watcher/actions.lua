@@ -18,12 +18,11 @@ local function to_lsp_diagnostic(d)
   }
 end
 
-function M.apply_lsp(diag, bufnr)
+function M.apply_lsp(diag)
   if not diag then
     vim.notify('nvim-watcher: no diagnostic to apply', vim.log.levels.INFO)
     return false
   end
-  bufnr = bufnr or 0
   local lsp_diag = to_lsp_diagnostic(diag)
   local start_line = (diag.lnum or 0) + 1
   local start_col = diag.col or 0
