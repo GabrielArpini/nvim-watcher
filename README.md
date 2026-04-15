@@ -69,6 +69,12 @@ sending for AWS keys, GitHub tokens, JWTs, private key blocks, and
 are replaced with `[REDACTED:kind]`. With `strict = true`, any
 redaction hit blocks the whole file instead of just redacting.
 
+Every model prompt is prepended with a "Prior feedback" section:
+up to 10 most recent negations (strongest signal, do not re-raise),
+then recent consents and applies within an 800-char budget. The
+model is instructed to treat rejections as hard rules. See the
+block with `:WatcherLastPrompt`.
+
 When the idle trigger fires, the plugin first looks for an LSP
 diagnostic near the cursor. If nothing qualifies and a model is
 configured, it asks the model. The model is instructed to stay silent

@@ -1,5 +1,6 @@
 local log = require('nvim-watcher.log')
 local status = require('nvim-watcher.status')
+local memory = require('nvim-watcher.memory')
 
 local M = {}
 
@@ -18,6 +19,7 @@ local SYSTEM_PROMPT = [[You are a code reviewer watching a developer write code 
 Your job is to stay silent UNLESS there is a concrete concern worth raising.
 Do NOT comment on style, formatting, naming, or minor improvements.
 Only speak if you see a likely bug, logic error, or a risky choice.
+If the prompt includes "Prior feedback", treat rejections as hard rules: never raise the same or semantically equivalent concern again. Treat acknowledged items as things the developer already knows.
 
 Output format, strict:
 - If nothing is worth flagging, output exactly: NONE
@@ -55,8 +57,14 @@ local function build_prompt(ctx)
   if ctx.repo_skeleton and ctx.repo_skeleton ~= '' then
     skeleton_section = ctx.repo_skeleton .. '\n\n'
   end
+  local feedback = memory.feedback_section({})
+  local feedback_section = ''
+  if feedback then
+    feedback_section = 'Prior feedback from this developer:\n' .. feedback .. '\n\n'
+  end
   local user = string.format(
-    '%sFile: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
+    '%s%sFile: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
+    feedback_section,
     skeleton_section,
     ctx.file or '(scratch)',
     ctx.lang or 'text',

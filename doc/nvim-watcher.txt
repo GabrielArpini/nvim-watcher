@@ -155,6 +155,11 @@ States: idle, thinking, offline, rate_limited, disabled.
 User responses are appended as JSON lines to `memory.jsonl` (local or
 global scope). Telemetry events go to `.nvim-watcher/log.jsonl` in cwd.
 
+Every model prompt is prepended with a "Prior feedback" section: up
+to 10 most recent negations first (strongest signal), then recent
+consents and applies within an 800-char budget. Inspect with
+`:WatcherLastPrompt`.
+
 ==============================================================================
 9. HEALTH                                            *nvim-watcher-health*
 
