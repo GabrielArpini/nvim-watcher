@@ -93,6 +93,12 @@ prefix, default `<leader>w`):
 idle_ms (number, default 7000)
     Milliseconds of no edits in insert mode before the trigger fires.
 
+                                         *nvim-watcher-exclude_filetypes*
+exclude_filetypes (string[], default prose + filetree types)
+    Filetypes where the idle trigger is suppressed. Defaults to
+    `markdown`, `gitcommit`, `help`, `text`, `NvimTree`, `oil`,
+    `neo-tree`. `:WatcherTrigger` still works in these buffers.
+
                                               *nvim-watcher-memory_scope*
 memory_scope ("local" | "global", default "local")
     "local"  writes to `.nvim-watcher/memory.jsonl` in cwd.

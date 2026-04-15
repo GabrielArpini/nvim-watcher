@@ -13,7 +13,16 @@ local state = {
   augroup = nil,
   idle_ms = 7000,
   dirty = false,
+  exclude_filetypes = {},
 }
+
+local function excluded()
+  local ft = vim.bo.filetype
+  for _, x in ipairs(state.exclude_filetypes) do
+    if x == ft then return true end
+  end
+  return false
+end
 
 local function cancel_timer()
   if state.timer then
@@ -136,6 +145,9 @@ end
 function M.setup(opts)
   opts = opts or {}
   state.idle_ms = opts.idle_ms or 7000
+  state.exclude_filetypes = opts.exclude_filetypes or {
+    'markdown', 'gitcommit', 'help', 'text', 'NvimTree', 'oil', 'neo-tree',
+  }
 
   state.augroup = vim.api.nvim_create_augroup('NvimWatcherTrigger', { clear = true })
 
@@ -143,6 +155,7 @@ function M.setup(opts)
     group = state.augroup,
     callback = function()
       if popup.is_open() then return end
+      if excluded() then return end
       state.dirty = true
       restart_timer()
     end,
@@ -152,6 +165,7 @@ function M.setup(opts)
     group = state.augroup,
     callback = function()
       if popup.is_open() then return end
+      if excluded() then return end
       if state.dirty then restart_timer() end
     end,
   })

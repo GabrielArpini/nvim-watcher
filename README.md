@@ -18,6 +18,7 @@ A dev-first Neovim plugin. The AI watches, questions, and catches mistakes, but 
 ```lua
 require('nvim-watcher').setup({
   idle_ms = 7000,
+  exclude_filetypes = { 'markdown', 'gitcommit', 'help', 'text' },
   memory_scope = 'local',   -- or 'global'
   keymap_prefix = '<leader>w',
   model = {
