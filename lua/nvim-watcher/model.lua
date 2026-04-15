@@ -1,4 +1,5 @@
 local log = require('nvim-watcher.log')
+local status = require('nvim-watcher.status')
 
 local M = {}
 
@@ -32,6 +33,7 @@ The function calls itself unconditionally on line 12, which will stack overflow.
 function M.setup(opts)
   opts = opts or {}
   for k, v in pairs(opts) do config[k] = v end
+  status.set(config.enabled and 'idle' or 'disabled')
 end
 
 function M.is_enabled()
@@ -100,9 +102,16 @@ local function call_ollama(prompt, on_done)
     local latency_ms = math.floor((vim.uv.hrtime() - started_at) / 1e6)
     vim.schedule(function()
       if res.code ~= 0 then
+        status.set('offline')
         log.append({ event = 'model_error', stage = 'curl', code = res.code, stderr = res.stderr, latency_ms = latency_ms })
         on_done(nil, 'curl exit ' .. tostring(res.code))
         return
+      end
+      local raw = res.stdout or ''
+      if raw:match('rate') and raw:match('limit') then
+        status.set('rate_limited')
+      else
+        status.set('idle')
       end
       local ok, decoded = pcall(vim.fn.json_decode, res.stdout or '')
       if not ok or type(decoded) ~= 'table' then
@@ -123,6 +132,7 @@ function M.query(ctx, callback)
     return
   end
   local prompt, truncated = build_prompt(ctx)
+  status.set('thinking')
   log.append({
     event = 'model_called',
     provider = config.provider,

@@ -91,6 +91,23 @@ will not re-open until its identity changes or you explicitly apply,
 consent, or negate. `:WatcherTrigger` always clears this and forces
 a fresh popup.
 
+## Statusline
+
+The plugin exposes a tiny state machine at
+`require('nvim-watcher.status')` with four states: `idle`, `thinking`,
+`offline`, `rate_limited` (plus `disabled` when no model is configured).
+Plug it into your statusline:
+
+```lua
+-- native statusline
+vim.o.statusline = vim.o.statusline .. " %{%v:lua.require'nvim-watcher.status'.statusline()%}"
+
+-- lualine
+require('lualine').setup({
+  sections = { lualine_x = { require('nvim-watcher.status').statusline } },
+})
+```
+
 ## Not goals
 
 No chat. No autocomplete. No PR reviews. If you want those, use a different plugin.
