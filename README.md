@@ -91,6 +91,12 @@ will not re-open until its identity changes or you explicitly apply,
 consent, or negate. `:WatcherTrigger` always clears this and forces
 a fresh popup.
 
+## Last prompt
+
+`:WatcherLastPrompt` opens the exact prompt last sent to the model
+(post-redaction, with repo skeleton), plus the raw response. Useful for
+verifying privacy redactions and tuning the skeleton budget.
+
 ## Memory browser
 
 `:WatcherMemory` opens a split summarizing local + global memory: total

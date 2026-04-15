@@ -72,6 +72,31 @@ function M.setup(opts)
     end, { desc = 'nvim-watcher: ' .. key })
   end
 
+  vim.api.nvim_create_user_command('WatcherLastPrompt', function()
+    local last = model.last()
+    if not last or not last.prompt then
+      vim.notify('nvim-watcher: no prompt sent yet', vim.log.levels.INFO)
+      return
+    end
+    local lines = {
+      string.format('# last prompt (file=%s, ts=%s, truncated=%s)', last.file or '?', last.ts or '?', tostring(last.truncated)),
+      '',
+      '## user prompt',
+      '',
+    }
+    for _, l in ipairs(vim.split(last.prompt, '\n')) do table.insert(lines, l) end
+    table.insert(lines, '')
+    table.insert(lines, '## response')
+    table.insert(lines, '')
+    for _, l in ipairs(vim.split(last.response or '(none)', '\n')) do table.insert(lines, l) end
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    vim.bo[buf].filetype = 'markdown'
+    vim.bo[buf].bufhidden = 'wipe'
+    vim.bo[buf].modifiable = false
+    vim.api.nvim_open_win(buf, true, { split = 'right' })
+  end, { desc = 'nvim-watcher: show last model prompt and response' })
+
   vim.api.nvim_create_user_command('WatcherMemory', function()
     require('nvim-watcher.browser').open()
   end, { desc = 'nvim-watcher: browse memory' })

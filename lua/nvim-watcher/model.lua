@@ -3,6 +3,8 @@ local status = require('nvim-watcher.status')
 
 local M = {}
 
+local last = { prompt = nil, file = nil, ts = nil, truncated = false, response = nil }
+
 local config = {
   enabled = false,
   provider = 'ollama',
@@ -120,6 +122,7 @@ local function call_ollama(prompt, on_done)
         return
       end
       local text = decoded.response or ''
+      last.response = text
       log.append({ event = 'model_response', raw = text, latency_ms = latency_ms })
       on_done(text, nil)
     end)
@@ -132,6 +135,7 @@ function M.query(ctx, callback)
     return
   end
   local prompt, truncated = build_prompt(ctx)
+  last = { prompt = prompt, file = ctx.file, ts = os.date('!%Y-%m-%dT%H:%M:%SZ'), truncated = truncated, response = nil }
   status.set('thinking')
   log.append({
     event = 'model_called',
@@ -153,6 +157,10 @@ function M.query(ctx, callback)
     local parsed = parse_response(raw)
     callback(parsed, nil)
   end)
+end
+
+function M.last()
+  return last
 end
 
 return M

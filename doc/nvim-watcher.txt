@@ -60,6 +60,10 @@ CONTENTS                                           *nvim-watcher-contents*
 :WatcherIgnore         Dismiss without recording. The same diagnostic will
                        not re-open until its identity changes.
 
+                                                     *:WatcherLastPrompt*
+:WatcherLastPrompt     Open a split with the last prompt sent to the model
+                       (post-redaction, with skeleton) and its response.
+
                                                          *:WatcherMemory*
 :WatcherMemory         Open a split summarizing memory: per-action totals,
                        grouped counts per question, and recent entries.
