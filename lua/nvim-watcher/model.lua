@@ -34,7 +34,9 @@ The function calls itself unconditionally on line 12, which will stack overflow.
 
 function M.setup(opts)
   opts = opts or {}
-  for k, v in pairs(opts) do config[k] = v end
+  for k, v in pairs(opts) do
+    config[k] = v
+  end
   status.set(config.enabled and 'idle' or 'disabled')
 end
 
@@ -66,7 +68,9 @@ local function build_prompt(ctx)
 end
 
 local function parse_response(text)
-  if not text or text == '' then return nil end
+  if not text or text == '' then
+    return nil
+  end
   text = text:gsub('^%s+', ''):gsub('%s+$', '')
   local first_line = text:match('^[^\n]+') or ''
   if first_line:upper():match('^NONE') then
@@ -94,10 +98,17 @@ local function call_ollama(prompt, on_done)
   })
   local url = config.url .. '/api/generate'
   local cmd = {
-    'curl', '-s', '--max-time', tostring(math.floor(config.timeout_ms / 1000)),
-    '-X', 'POST', url,
-    '-H', 'Content-Type: application/json',
-    '-d', body,
+    'curl',
+    '-s',
+    '--max-time',
+    tostring(math.floor(config.timeout_ms / 1000)),
+    '-X',
+    'POST',
+    url,
+    '-H',
+    'Content-Type: application/json',
+    '-d',
+    body,
   }
   local started_at = vim.uv.hrtime()
   vim.system(cmd, { text = true }, function(res)
@@ -105,7 +116,13 @@ local function call_ollama(prompt, on_done)
     vim.schedule(function()
       if res.code ~= 0 then
         status.set('offline')
-        log.append({ event = 'model_error', stage = 'curl', code = res.code, stderr = res.stderr, latency_ms = latency_ms })
+        log.append({
+          event = 'model_error',
+          stage = 'curl',
+          code = res.code,
+          stderr = res.stderr,
+          latency_ms = latency_ms,
+        })
         on_done(nil, 'curl exit ' .. tostring(res.code))
         return
       end
@@ -117,7 +134,12 @@ local function call_ollama(prompt, on_done)
       end
       local ok, decoded = pcall(vim.fn.json_decode, res.stdout or '')
       if not ok or type(decoded) ~= 'table' then
-        log.append({ event = 'model_error', stage = 'decode', raw = res.stdout, latency_ms = latency_ms })
+        log.append({
+          event = 'model_error',
+          stage = 'decode',
+          raw = res.stdout,
+          latency_ms = latency_ms,
+        })
         on_done(nil, 'decode failure')
         return
       end
@@ -135,7 +157,13 @@ function M.query(ctx, callback)
     return
   end
   local prompt, truncated = build_prompt(ctx)
-  last = { prompt = prompt, file = ctx.file, ts = os.date('!%Y-%m-%dT%H:%M:%SZ'), truncated = truncated, response = nil }
+  last = {
+    prompt = prompt,
+    file = ctx.file,
+    ts = os.date('!%Y-%m-%dT%H:%M:%SZ'),
+    truncated = truncated,
+    response = nil,
+  }
   status.set('thinking')
   log.append({
     event = 'model_called',
@@ -146,7 +174,10 @@ function M.query(ctx, callback)
   })
   if truncated then
     vim.schedule(function()
-      vim.notify('nvim-watcher: file truncated for model (>' .. config.max_context_chars .. ' chars)', vim.log.levels.WARN)
+      vim.notify(
+        'nvim-watcher: file truncated for model (>' .. config.max_context_chars .. ' chars)',
+        vim.log.levels.WARN
+      )
     end)
   end
   call_ollama(prompt, function(raw, err)

@@ -10,7 +10,9 @@ local M = {}
 local did_setup = false
 
 function M.setup(opts)
-  if did_setup then return end
+  if did_setup then
+    return
+  end
   did_setup = true
   opts = opts or {}
 
@@ -54,7 +56,9 @@ function M.setup(opts)
     group = vim.api.nvim_create_augroup('NvimWatcherSkeleton', { clear = true }),
     callback = function(args)
       local root = skeleton.root()
-      if not root then return end
+      if not root then
+        return
+      end
       local full = vim.api.nvim_buf_get_name(args.buf)
       if full:sub(1, #root + 1) == root .. '/' then
         skeleton.invalidate(full:sub(#root + 2))
@@ -79,16 +83,25 @@ function M.setup(opts)
       return
     end
     local lines = {
-      string.format('# last prompt (file=%s, ts=%s, truncated=%s)', last.file or '?', last.ts or '?', tostring(last.truncated)),
+      string.format(
+        '# last prompt (file=%s, ts=%s, truncated=%s)',
+        last.file or '?',
+        last.ts or '?',
+        tostring(last.truncated)
+      ),
       '',
       '## user prompt',
       '',
     }
-    for _, l in ipairs(vim.split(last.prompt, '\n')) do table.insert(lines, l) end
+    for _, l in ipairs(vim.split(last.prompt, '\n')) do
+      table.insert(lines, l)
+    end
     table.insert(lines, '')
     table.insert(lines, '## response')
     table.insert(lines, '')
-    for _, l in ipairs(vim.split(last.response or '(none)', '\n')) do table.insert(lines, l) end
+    for _, l in ipairs(vim.split(last.response or '(none)', '\n')) do
+      table.insert(lines, l)
+    end
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.bo[buf].filetype = 'markdown'

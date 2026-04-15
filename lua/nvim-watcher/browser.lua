@@ -13,7 +13,9 @@ end
 
 local function read_jsonl(path)
   local entries = {}
-  if vim.fn.filereadable(path) == 0 then return entries end
+  if vim.fn.filereadable(path) == 0 then
+    return entries
+  end
   for _, line in ipairs(vim.fn.readfile(path)) do
     if line ~= '' then
       local ok, decoded = pcall(vim.fn.json_decode, line)
@@ -41,11 +43,17 @@ local function group(entries)
     end
     g[e.action or 'unknown'] = (g[e.action or 'unknown'] or 0) + 1
     g.total = g.total + 1
-    if (e.ts or '') > g.last_ts then g.last_ts = e.ts or '' end
+    if (e.ts or '') > g.last_ts then
+      g.last_ts = e.ts or ''
+    end
   end
   local list = {}
-  for _, g in pairs(groups) do table.insert(list, g) end
-  table.sort(list, function(a, b) return a.total > b.total end)
+  for _, g in pairs(groups) do
+    table.insert(list, g)
+  end
+  table.sort(list, function(a, b)
+    return a.total > b.total
+  end)
   return list
 end
 
@@ -56,9 +64,14 @@ local function render(all_entries, scope_label)
   table.insert(lines, string.format('scope shown: %s | entries: %d', scope_label, #all_entries))
   local totals = { apply = 0, consent = 0, negate = 0 }
   for _, e in ipairs(all_entries) do
-    if totals[e.action] then totals[e.action] = totals[e.action] + 1 end
+    if totals[e.action] then
+      totals[e.action] = totals[e.action] + 1
+    end
   end
-  table.insert(lines, string.format('apply %d | consent %d | negate %d', totals.apply, totals.consent, totals.negate))
+  table.insert(
+    lines,
+    string.format('apply %d | consent %d | negate %d', totals.apply, totals.consent, totals.negate)
+  )
   table.insert(lines, '')
   table.insert(lines, '## Most acted')
   table.insert(lines, '')
@@ -67,8 +80,16 @@ local function render(all_entries, scope_label)
     table.insert(lines, '(empty)')
   else
     for _, g in ipairs(grouped) do
-      table.insert(lines, string.format('apply %-3d consent %-3d negate %-3d  %s',
-        g.apply or 0, g.consent or 0, g.negate or 0, g.question))
+      table.insert(
+        lines,
+        string.format(
+          'apply %-3d consent %-3d negate %-3d  %s',
+          g.apply or 0,
+          g.consent or 0,
+          g.negate or 0,
+          g.question
+        )
+      )
     end
   end
   table.insert(lines, '')
@@ -94,7 +115,9 @@ function M.open()
     local entries = read_jsonl(p.path)
     if #entries > 0 then
       table.insert(shown, string.format('%s (%d)', p.scope, #entries))
-      for _, e in ipairs(entries) do table.insert(all, e) end
+      for _, e in ipairs(entries) do
+        table.insert(all, e)
+      end
     end
   end
   local label = #shown > 0 and table.concat(shown, ', ') or ('active=' .. memory.scope())

@@ -6,13 +6,22 @@ local state = {
 }
 
 local function make_identity(diag)
-  if not diag then return nil end
-  return string.format('%s|%s|%s', tostring(diag.source or ''), tostring(diag.message or ''), tostring(diag.lnum or ''))
+  if not diag then
+    return nil
+  end
+  return string.format(
+    '%s|%s|%s',
+    tostring(diag.source or ''),
+    tostring(diag.message or ''),
+    tostring(diag.lnum or '')
+  )
 end
 
 function M.should_suppress(diag)
   local id = make_identity(diag)
-  if not id then return false end
+  if not id then
+    return false
+  end
   if state.identity == id and state.ignored then
     return true
   end

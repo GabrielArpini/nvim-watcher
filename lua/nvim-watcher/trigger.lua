@@ -19,7 +19,9 @@ local state = {
 local function excluded()
   local ft = vim.bo.filetype
   for _, x in ipairs(state.exclude_filetypes) do
-    if x == ft then return true end
+    if x == ft then
+      return true
+    end
   end
   return false
 end
@@ -37,7 +39,9 @@ local function build_lsp_opts()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local line = cursor[1] - 1
   local d = diagnostics.pick_nearest(bufnr, line)
-  if not d then return nil end
+  if not d then
+    return nil
+  end
   if dedupe.should_suppress(d) then
     return nil, 'suppressed_duplicate'
   end
@@ -78,7 +82,9 @@ local function build_model_ctx()
 end
 
 local function try_model()
-  if not model.is_enabled() then return end
+  if not model.is_enabled() then
+    return
+  end
 
   local file = vim.fn.expand('%:.')
   local blocked, matched = privacy.is_blocked_path(file)
@@ -91,7 +97,11 @@ local function try_model()
 
   if ctx.redaction_count > 0 then
     if privacy.is_strict() then
-      log.append({ event = 'privacy_blocked_content', file = file, redactions = ctx.redaction_count })
+      log.append({
+        event = 'privacy_blocked_content',
+        file = file,
+        redactions = ctx.redaction_count,
+      })
       return
     end
     log.append({ event = 'privacy_redacted', file = file, redactions = ctx.redaction_count })
@@ -120,8 +130,14 @@ local function fire()
   state.dirty = false
   local lsp_opts, suppress = build_lsp_opts()
   if lsp_opts then
-    log.append({ event = 'trigger_fired', cause = 'idle_after_insert_edit', source = lsp_opts.source })
-    vim.schedule(function() popup.open(lsp_opts) end)
+    log.append({
+      event = 'trigger_fired',
+      cause = 'idle_after_insert_edit',
+      source = lsp_opts.source,
+    })
+    vim.schedule(function()
+      popup.open(lsp_opts)
+    end)
     return
   end
   if suppress then
@@ -137,7 +153,9 @@ end
 
 local function restart_timer()
   cancel_timer()
-  if not state.dirty then return end
+  if not state.dirty then
+    return
+  end
   state.timer = vim.uv.new_timer()
   state.timer:start(state.idle_ms, 0, vim.schedule_wrap(fire))
 end
@@ -145,17 +163,28 @@ end
 function M.setup(opts)
   opts = opts or {}
   state.idle_ms = opts.idle_ms or 7000
-  state.exclude_filetypes = opts.exclude_filetypes or {
-    'markdown', 'gitcommit', 'help', 'text', 'NvimTree', 'oil', 'neo-tree',
-  }
+  state.exclude_filetypes = opts.exclude_filetypes
+    or {
+      'markdown',
+      'gitcommit',
+      'help',
+      'text',
+      'NvimTree',
+      'oil',
+      'neo-tree',
+    }
 
   state.augroup = vim.api.nvim_create_augroup('NvimWatcherTrigger', { clear = true })
 
   vim.api.nvim_create_autocmd('TextChangedI', {
     group = state.augroup,
     callback = function()
-      if popup.is_open() then return end
-      if excluded() then return end
+      if popup.is_open() then
+        return
+      end
+      if excluded() then
+        return
+      end
       state.dirty = true
       restart_timer()
     end,
@@ -164,9 +193,15 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd('InsertLeave', {
     group = state.augroup,
     callback = function()
-      if popup.is_open() then return end
-      if excluded() then return end
-      if state.dirty then restart_timer() end
+      if popup.is_open() then
+        return
+      end
+      if excluded() then
+        return
+      end
+      if state.dirty then
+        restart_timer()
+      end
     end,
   })
 

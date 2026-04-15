@@ -11,12 +11,16 @@ function M.pick_nearest(bufnr, cursor_line)
   local diags = vim.diagnostic.get(bufnr, {
     severity = { min = vim.diagnostic.severity.WARN },
   })
-  if #diags == 0 then return nil end
+  if #diags == 0 then
+    return nil
+  end
 
   table.sort(diags, function(a, b)
     local da = math.abs(a.lnum - cursor_line)
     local db = math.abs(b.lnum - cursor_line)
-    if da ~= db then return da < db end
+    if da ~= db then
+      return da < db
+    end
     return a.severity < b.severity
   end)
 

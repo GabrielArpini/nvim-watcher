@@ -12,8 +12,12 @@ local state = 'disabled'
 local since = 0
 
 function M.set(new_state)
-  if not STATES[new_state] then return end
-  if state == new_state then return end
+  if not STATES[new_state] then
+    return
+  end
+  if state == new_state then
+    return
+  end
   state = new_state
   since = vim.uv.hrtime()
   vim.schedule(function()

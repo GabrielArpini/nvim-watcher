@@ -36,7 +36,9 @@ function M.build(file_tags)
   end
 
   local nodes = {}
-  for f in pairs(all_files) do table.insert(nodes, f) end
+  for f in pairs(all_files) do
+    table.insert(nodes, f)
+  end
 
   return {
     nodes = nodes,
@@ -51,7 +53,9 @@ function M.pagerank(g, personalization, damping, iterations)
   local nodes = g.nodes
   local graph = g.graph
   local N = #nodes
-  if N == 0 then return {} end
+  if N == 0 then
+    return {}
+  end
 
   local p = {}
   local psum = 0
@@ -62,18 +66,26 @@ function M.pagerank(g, personalization, damping, iterations)
   end
   if psum == 0 then
     local uniform = 1 / N
-    for _, n in ipairs(nodes) do p[n] = uniform end
+    for _, n in ipairs(nodes) do
+      p[n] = uniform
+    end
   else
-    for n, w in pairs(p) do p[n] = w / psum end
+    for n, w in pairs(p) do
+      p[n] = w / psum
+    end
   end
 
   local rank = {}
-  for _, n in ipairs(nodes) do rank[n] = 1 / N end
+  for _, n in ipairs(nodes) do
+    rank[n] = 1 / N
+  end
 
   local out_sum = {}
   for from, edges in pairs(graph) do
     local s = 0
-    for _, w in pairs(edges) do s = s + w end
+    for _, w in pairs(edges) do
+      s = s + w
+    end
     out_sum[from] = s
   end
 

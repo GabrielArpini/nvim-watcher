@@ -72,11 +72,15 @@ local function write_memory(action, opts, reason)
 end
 
 local function respond(action, extra)
-  if not M.is_open() then return end
+  if not M.is_open() then
+    return
+  end
   local opts = state.current_opts
   local event = { event = 'response', action = action }
   if extra then
-    for k, v in pairs(extra) do event[k] = v end
+    for k, v in pairs(extra) do
+      event[k] = v
+    end
   end
   log.append(event)
 
@@ -90,7 +94,13 @@ local function respond(action, extra)
   end
 
   local do_after_close
-  if action == 'apply' and opts and opts.source == 'lsp_diagnostic' and opts.diagnostic and opts.diagnostic.raw then
+  if
+    action == 'apply'
+    and opts
+    and opts.source == 'lsp_diagnostic'
+    and opts.diagnostic
+    and opts.diagnostic.raw
+  then
     local raw = opts.diagnostic.raw
     local bufnr = opts.bufnr or 0
     do_after_close = function()
@@ -104,14 +114,20 @@ local function respond(action, extra)
   end
 end
 
-local function do_apply() respond('apply') end
-local function do_consent() respond('consent') end
+local function do_apply()
+  respond('apply')
+end
+local function do_consent()
+  respond('consent')
+end
 local function do_negate()
   vim.ui.input({ prompt = 'Why reject? ' }, function(reason)
     respond('negate', { reason = reason or '' })
   end)
 end
-local function do_ignore() respond('ignore') end
+local function do_ignore()
+  respond('ignore')
+end
 
 function M.setup(opts)
   opts = opts or {}
@@ -135,7 +151,9 @@ end
 
 local function bind_global_keys()
   local prefix = config.keymap_prefix
-  if not prefix or prefix == false then return end
+  if not prefix or prefix == false then
+    return
+  end
   local keys = {
     { prefix .. 'a', do_apply, 'nvim-watcher: apply' },
     { prefix .. 'c', do_consent, 'nvim-watcher: consent' },
@@ -149,16 +167,25 @@ local function bind_global_keys()
 end
 
 function M.open(opts)
-  if M.is_open() then return end
+  if M.is_open() then
+    return
+  end
   opts = opts or {}
   opts.bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   local question = opts.question or 'This is a placeholder question about your code.'
-  local reasoning = opts.reasoning or 'Placeholder reasoning: model would explain why it flagged this.'
+  local reasoning = opts.reasoning
+    or 'Placeholder reasoning: model would explain why it flagged this.'
 
   local prefix = config.keymap_prefix or ''
   local hints
   if prefix ~= '' then
-    hints = string.format('  [%sa] Apply  [%sc] Consent  [%sn] Negate  [%si] Ignore', prefix, prefix, prefix, prefix)
+    hints = string.format(
+      '  [%sa] Apply  [%sc] Consent  [%sn] Negate  [%si] Ignore',
+      prefix,
+      prefix,
+      prefix,
+      prefix
+    )
   else
     hints = '  :WatcherApply  :WatcherConsent  :WatcherNegate  :WatcherIgnore'
   end

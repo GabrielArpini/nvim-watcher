@@ -12,7 +12,9 @@ local function local_path()
 end
 
 local function memory_dir(scope)
-  if scope == 'global' then return global_path() end
+  if scope == 'global' then
+    return global_path()
+  end
   return local_path()
 end
 

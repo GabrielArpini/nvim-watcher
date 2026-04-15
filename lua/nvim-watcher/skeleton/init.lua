@@ -19,7 +19,9 @@ local state = {
 
 function M.setup(opts)
   opts = opts or {}
-  for k, v in pairs(opts) do config[k] = v end
+  for k, v in pairs(opts) do
+    config[k] = v
+  end
 end
 
 function M.is_enabled()
@@ -37,7 +39,9 @@ end
 
 local function list_tracked_files(root)
   local res = vim.fn.systemlist({ 'git', '-C', root, 'ls-files' })
-  if vim.v.shell_error ~= 0 then return {} end
+  if vim.v.shell_error ~= 0 then
+    return {}
+  end
   return res
 end
 
@@ -64,7 +68,14 @@ function M.build()
     return
   end
   if #files > config.max_files then
-    vim.notify(string.format('nvim-watcher: skeleton skipped, %d files > max_files=%d', #files, config.max_files), vim.log.levels.WARN)
+    vim.notify(
+      string.format(
+        'nvim-watcher: skeleton skipped, %d files > max_files=%d',
+        #files,
+        config.max_files
+      ),
+      vim.log.levels.WARN
+    )
     state.built = true
     state.graph = graph_mod.build({})
     return
@@ -104,9 +115,13 @@ end
 
 function M.get_skeleton(opts)
   opts = opts or {}
-  if not M.is_enabled() then return nil end
+  if not M.is_enabled() then
+    return nil
+  end
   ensure_built()
-  if not state.graph or #state.graph.nodes == 0 then return nil end
+  if not state.graph or #state.graph.nodes == 0 then
+    return nil
+  end
 
   local current_file = opts.current_file
   local personalization = {}
@@ -124,7 +139,8 @@ function M.get_skeleton(opts)
   for f, entry in pairs(state.cache) do
     file_tags[f] = entry.tags
   end
-  local text, tokens = pack.render(file_tags, rank, opts.max_tokens or config.max_tokens, current_file)
+  local text, tokens =
+    pack.render(file_tags, rank, opts.max_tokens or config.max_tokens, current_file)
   return text, tokens
 end
 

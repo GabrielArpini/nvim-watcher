@@ -13,8 +13,16 @@ end
 
 local function check_binaries()
   start('nvim-watcher: binaries')
-  if has('curl') then ok('curl found') else err('curl not found (required for model calls)') end
-  if has('git') then ok('git found') else warn('git not found (repo skeleton will fall back to cwd)') end
+  if has('curl') then
+    ok('curl found')
+  else
+    err('curl not found (required for model calls)')
+  end
+  if has('git') then
+    ok('git found')
+  else
+    warn('git not found (repo skeleton will fall back to cwd)')
+  end
 end
 
 local function check_ollama()
@@ -43,12 +51,18 @@ local function check_treesitter()
   local missing = {}
   for _, lang in ipairs(langs) do
     local okp = pcall(vim.treesitter.language.add, lang)
-    if not okp then table.insert(missing, lang) end
+    if not okp then
+      table.insert(missing, lang)
+    end
   end
   if #missing == 0 then
     ok('all skeleton parsers available')
   else
-    warn('missing parsers: ' .. table.concat(missing, ', ') .. ' (files in these languages skip the skeleton)')
+    warn(
+      'missing parsers: '
+        .. table.concat(missing, ', ')
+        .. ' (files in these languages skip the skeleton)'
+    )
   end
 end
 

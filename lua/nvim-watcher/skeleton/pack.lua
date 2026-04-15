@@ -6,7 +6,9 @@ end
 
 local function read_line(path, line_1based)
   local f = io.open(path, 'r')
-  if not f then return nil end
+  if not f then
+    return nil
+  end
   local current = 0
   for line in f:lines() do
     current = current + 1
@@ -14,7 +16,9 @@ local function read_line(path, line_1based)
       f:close()
       return line
     end
-    if current > line_1based + 5 then break end
+    if current > line_1based + 5 then
+      break
+    end
   end
   f:close()
   return nil
@@ -30,8 +34,10 @@ function M.render(file_tags, rank, max_tokens, current_file)
       for _, tag in ipairs(tags) do
         if tag.kind == 'def' then
           local kind_weight = 1.0
-          if tag.capture:find('class') then kind_weight = 1.5
-          elseif tag.capture:find('function') or tag.capture:find('method') then kind_weight = 1.2
+          if tag.capture:find('class') then
+            kind_weight = 1.5
+          elseif tag.capture:find('function') or tag.capture:find('method') then
+            kind_weight = 1.2
           end
           table.insert(scored, {
             file = file,
@@ -45,7 +51,9 @@ function M.render(file_tags, rank, max_tokens, current_file)
     end
   end
 
-  table.sort(scored, function(a, b) return a.score > b.score end)
+  table.sort(scored, function(a, b)
+    return a.score > b.score
+  end)
 
   local by_file = {}
   local file_order = {}
@@ -62,7 +70,9 @@ function M.render(file_tags, rank, max_tokens, current_file)
     local snippet = read_line(t.file, t.line + 1)
     if snippet then
       snippet = snippet:gsub('^%s+', ''):gsub('%s+$', '')
-      if #snippet > 140 then snippet = snippet:sub(1, 140) .. '...' end
+      if #snippet > 140 then
+        snippet = snippet:sub(1, 140) .. '...'
+      end
     else
       snippet = t.name
     end
