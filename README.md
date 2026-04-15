@@ -91,6 +91,12 @@ will not re-open until its identity changes or you explicitly apply,
 consent, or negate. `:WatcherTrigger` always clears this and forces
 a fresh popup.
 
+## Health check
+
+Run `:checkhealth nvim-watcher` to verify curl, git, ollama
+reachability, treesitter parsers, vendored queries, and cwd writability.
+See `:h nvim-watcher` for the full help doc.
+
 ## Statusline
 
 The plugin exposes a tiny state machine at
