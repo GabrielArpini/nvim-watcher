@@ -94,8 +94,7 @@ end
 
 function M.feedback_section(opts)
   opts = opts or {}
-  local max_negates = opts.max_negates or 10
-  local budget = opts.char_budget or 800
+  local others_budget = opts.others_char_budget or 400
   local all = M.all()
 
   local negates, others = {}, {}
@@ -108,65 +107,47 @@ function M.feedback_section(opts)
     end
   end
 
-  local lines = {}
-  local used = 0
-  local seen = {}
-
-  local function add(line)
-    if used + #line + 1 > budget then
-      return false
-    end
-    table.insert(lines, line)
-    used = used + #line + 1
-    return true
-  end
-
-  local neg_out = {}
-  for i = 1, math.min(max_negates, #negates) do
-    local e = negates[i]
-    local q = question_of(e)
-    if q ~= '' and not seen[q] then
-      seen[q] = true
-      local reason = e.reason and (' (reason: ' .. e.reason .. ')') or ''
-      table.insert(neg_out, '- ' .. q .. reason)
-    end
-  end
-
-  if #neg_out == 0 and #others == 0 then
+  if #negates == 0 and #others == 0 then
     return nil
   end
 
-  if #neg_out > 0 then
-    add('Rejected previously, do NOT raise again:')
-    for _, l in ipairs(neg_out) do
-      add(l)
+  local lines = {}
+  local seen = {}
+
+  if #negates > 0 then
+    table.insert(lines, 'Rejected previously, do NOT raise again (hard rules):')
+    for _, e in ipairs(negates) do
+      local q = question_of(e)
+      if q ~= '' and not seen[q] then
+        seen[q] = true
+        local reason = e.reason and (' (reason: ' .. e.reason .. ')') or ''
+        table.insert(lines, '- ' .. q .. reason)
+      end
     end
-    add('')
+    table.insert(lines, '')
   end
 
+  local used = 0
   local appr = {}
   for _, e in ipairs(others) do
     local q = question_of(e)
     if q ~= '' and not seen[q] then
-      seen[q] = true
-      table.insert(appr, '- ' .. q)
-      if #appr >= 20 then
+      local entry = '- ' .. q
+      if used + #entry + 1 > others_budget then
         break
       end
+      seen[q] = true
+      used = used + #entry + 1
+      table.insert(appr, entry)
     end
   end
   if #appr > 0 then
-    add('Already acknowledged, do NOT repeat:')
+    table.insert(lines, 'Already acknowledged, do NOT repeat:')
     for _, l in ipairs(appr) do
-      if not add(l) then
-        break
-      end
+      table.insert(lines, l)
     end
   end
 
-  if #lines == 0 then
-    return nil
-  end
   return table.concat(lines, '\n')
 end
 

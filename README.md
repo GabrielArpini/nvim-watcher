@@ -70,10 +70,10 @@ are replaced with `[REDACTED:kind]`. With `strict = true`, any
 redaction hit blocks the whole file instead of just redacting.
 
 Every model prompt is prepended with a "Prior feedback" section:
-up to 10 most recent negations (strongest signal, do not re-raise),
-then recent consents and applies within an 800-char budget. The
-model is instructed to treat rejections as hard rules. See the
-block with `:WatcherLastPrompt`.
+**all** negations are included unconditionally (treated as hard
+rules the model must never re-raise), followed by recent consents
+and applies within a smaller 400-char soft budget. Inspect with
+`:WatcherLastPrompt`.
 
 When the idle trigger fires, the plugin first looks for an LSP
 diagnostic near the cursor. If nothing qualifies and a model is
