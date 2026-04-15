@@ -4,6 +4,7 @@ local popup = require('nvim-watcher.popup')
 local model = require('nvim-watcher.model')
 local privacy = require('nvim-watcher.privacy')
 local skeleton = require('nvim-watcher.skeleton')
+local diff_review = require('nvim-watcher.diff_review')
 
 local M = {}
 
@@ -21,7 +22,13 @@ function M.setup(opts)
   model.setup(opts.model or {})
   privacy.setup(opts.privacy or {})
   skeleton.setup(opts.skeleton or {})
+  diff_review.setup(opts.diff_review or {})
+  diff_review.attach()
   trigger.setup(opts)
+
+  vim.api.nvim_create_user_command('WatcherReview', function()
+    diff_review.run_now()
+  end, { desc = 'nvim-watcher: review git diff HEAD now' })
 
   vim.api.nvim_create_user_command('WatcherTrigger', function()
     trigger.summon()

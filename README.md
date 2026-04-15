@@ -40,6 +40,12 @@ require('nvim-watcher').setup({
     max_tokens = 2000,           -- rough cap on the repo-context blob
     max_files = 2000,            -- repos larger than this skip the skeleton build
   },
+  diff_review = {
+    enabled = true,
+    debounce_ms = 3000,          -- wait after BufWritePost before running
+    min_lines = 5,               -- skip trivial diffs
+    max_lines = 500,             -- skip huge diffs
+  },
 })
 ```
 
@@ -74,6 +80,15 @@ Every model prompt is prepended with a "Prior feedback" section:
 rules the model must never re-raise), followed by recent consents
 and applies within a smaller 400-char soft budget. Inspect with
 `:WatcherLastPrompt`.
+
+## Auto diff review
+
+After every save, debounced by `diff_review.debounce_ms`, the plugin
+hashes `git diff HEAD` and sends it to the model if the diff changed
+since the last review and the line count falls between `min_lines`
+and `max_lines`. The first save after setup records a baseline
+without triggering a review. Popups from this path have
+`source = 'diff_review'`. Run `:WatcherReview` to force it now.
 
 When the idle trigger fires, the plugin first looks for an LSP
 diagnostic near the cursor. If nothing qualifies and a model is

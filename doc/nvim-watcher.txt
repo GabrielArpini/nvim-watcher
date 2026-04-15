@@ -60,6 +60,11 @@ CONTENTS                                           *nvim-watcher-contents*
 :WatcherIgnore         Dismiss without recording. The same diagnostic will
                        not re-open until its identity changes.
 
+                                                         *:WatcherReview*
+:WatcherReview         Force an auto diff review now (normally debounced
+                       after BufWritePost). Silent unless the model
+                       finds a concern.
+
                                                      *:WatcherLastPrompt*
 :WatcherLastPrompt     Open a split with the last prompt sent to the model
                        (post-redaction, with skeleton) and its response.
@@ -115,6 +120,13 @@ model (table)
     name          model name passed to ollama
     url           ollama server URL
     timeout_ms    curl timeout
+
+                                               *nvim-watcher-diff_review*
+diff_review (table)
+    enabled       boolean, default true
+    debounce_ms   wait after BufWritePost, default 3000
+    min_lines     skip diffs smaller than this, default 5
+    max_lines     skip diffs larger than this, default 500
 
 ==============================================================================
 5. PRIVACY                                           *nvim-watcher-privacy*

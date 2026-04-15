@@ -62,16 +62,26 @@ local function build_prompt(ctx)
   if feedback then
     feedback_section = 'Prior feedback from this developer:\n' .. feedback .. '\n\n'
   end
-  local user = string.format(
-    '%s%sFile: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
-    feedback_section,
-    skeleton_section,
-    ctx.file or '(scratch)',
-    ctx.lang or 'text',
-    ctx.cursor_line or 1,
-    ctx.lang or '',
-    code
-  )
+  local user
+  if ctx.review_diff then
+    user = string.format(
+      '%s%sYou are reviewing a working-tree diff (git diff HEAD). Flag concrete concerns only.\n\n```diff\n%s\n```\n\nRespond per the output format.',
+      feedback_section,
+      skeleton_section,
+      code
+    )
+  else
+    user = string.format(
+      '%s%sFile: %s\nLanguage: %s\nCursor at line: %d\n\n```%s\n%s\n```\n\nRespond per the output format.',
+      feedback_section,
+      skeleton_section,
+      ctx.file or '(scratch)',
+      ctx.lang or 'text',
+      ctx.cursor_line or 1,
+      ctx.lang or '',
+      code
+    )
+  end
   return user, truncated
 end
 
