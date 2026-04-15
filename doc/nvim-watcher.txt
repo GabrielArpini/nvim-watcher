@@ -1,0 +1,150 @@
+*nvim-watcher.txt*   No bullshit code companion.
+
+                                                            *nvim-watcher*
+
+A dev-first Neovim plugin. The AI watches, questions, and catches mistakes,
+but never writes code unless you explicitly ask. You own every decision.
+
+==============================================================================
+CONTENTS                                           *nvim-watcher-contents*
+
+  1. Setup ................................ |nvim-watcher-setup|
+  2. Commands ............................. |nvim-watcher-commands|
+  3. Keymaps .............................. |nvim-watcher-keymaps|
+  4. Configuration ........................ |nvim-watcher-config|
+  5. Privacy .............................. |nvim-watcher-privacy|
+  6. Repo skeleton ........................ |nvim-watcher-skeleton|
+  7. Statusline ........................... |nvim-watcher-statusline|
+  8. Memory ............................... |nvim-watcher-memory|
+  9. Health ............................... |nvim-watcher-health|
+
+==============================================================================
+1. SETUP                                              *nvim-watcher-setup*
+
+>lua
+    require('nvim-watcher').setup({
+      idle_ms = 7000,
+      memory_scope = 'local',
+      keymap_prefix = '<leader>w',
+      model = {
+        enabled = true,
+        provider = 'ollama',
+        name = 'qwen2.5:0.5b',
+        url = 'http://localhost:11434',
+        timeout_ms = 10000,
+      },
+    })
+<
+
+==============================================================================
+2. COMMANDS                                         *nvim-watcher-commands*
+
+                                                        *:WatcherTrigger*
+:WatcherTrigger        Force a popup now. Clears dedupe state.
+
+                                                          *:WatcherClose*
+:WatcherClose          Close the current popup.
+
+                                                          *:WatcherApply*
+:WatcherApply          Apply action for the current popup. For an LSP
+                       diagnostic, runs the matching code action.
+
+                                                        *:WatcherConsent*
+:WatcherConsent        Mark the suggestion as valid; you will handle it.
+                       Stored in memory as an approved pattern.
+
+                                                         *:WatcherNegate*
+:WatcherNegate         Reject the suggestion. Stored as a rejection.
+
+                                                         *:WatcherIgnore*
+:WatcherIgnore         Dismiss without recording. The same diagnostic will
+                       not re-open until its identity changes.
+
+                                                       *:WatcherSkeleton*
+:WatcherSkeleton       Open the current repo skeleton in a split.
+
+                                                *:WatcherRebuildSkeleton*
+:WatcherRebuildSkeleton
+                       Force a full skeleton rebuild; prints elapsed time.
+
+==============================================================================
+3. KEYMAPS                                           *nvim-watcher-keymaps*
+
+When a popup is open, the following global maps are active (configurable
+prefix, default `<leader>w`):
+
+    <leader>wa     Apply
+    <leader>wc     Consent
+    <leader>wn     Negate
+    <leader>wi     Ignore
+
+==============================================================================
+4. CONFIGURATION                                      *nvim-watcher-config*
+
+                                                   *nvim-watcher-idle_ms*
+idle_ms (number, default 7000)
+    Milliseconds of no edits in insert mode before the trigger fires.
+
+                                              *nvim-watcher-memory_scope*
+memory_scope ("local" | "global", default "local")
+    "local"  writes to `.nvim-watcher/memory.jsonl` in cwd.
+    "global" writes to `~/.config/nvim-watcher/memory.jsonl`.
+
+                                             *nvim-watcher-keymap_prefix*
+keymap_prefix (string, default "<leader>w")
+    Prefix for popup response maps.
+
+                                                    *nvim-watcher-model*
+model (table)
+    enabled       boolean, default false
+    provider      "ollama" (only supported provider for now)
+    name          model name passed to ollama
+    url           ollama server URL
+    timeout_ms    curl timeout
+
+==============================================================================
+5. PRIVACY                                           *nvim-watcher-privacy*
+
+Files matching secrets-like globs (`.env*`, `*.key`, `**/secrets/**`,
+`**/.ssh/**`, cloud credentials, etc.) are never sent to the model.
+
+When `privacy.redact = true` (default), buffer content is scanned before
+sending for AWS keys, GitHub tokens, JWTs, private key blocks, and
+`api_key`/`token`/`secret`/`password` assignments, replaced with
+`[REDACTED:kind]`. With `privacy.strict = true`, any redaction hit blocks
+the whole file.
+
+==============================================================================
+6. REPO SKELETON                                    *nvim-watcher-skeleton*
+
+On first trigger the plugin walks `git ls-files`, extracts symbol
+definitions and references via treesitter tag queries, builds a reference
+graph, and runs personalized PageRank biased toward the current buffer.
+Top-ranked symbols are packed into a `max_tokens`-budget outline and
+prepended to every model prompt as `Repo context:`.
+
+Tag queries under `queries/` are vendored from aider (Apache-2.0).
+
+==============================================================================
+7. STATUSLINE                                     *nvim-watcher-statusline*
+
+>lua
+    vim.o.statusline = vim.o.statusline
+      .. " %{%v:lua.require'nvim-watcher.status'.statusline()%}"
+<
+
+States: idle, thinking, offline, rate_limited, disabled.
+
+==============================================================================
+8. MEMORY                                            *nvim-watcher-memory*
+
+User responses are appended as JSON lines to `memory.jsonl` (local or
+global scope). Telemetry events go to `.nvim-watcher/log.jsonl` in cwd.
+
+==============================================================================
+9. HEALTH                                            *nvim-watcher-health*
+
+Run `:checkhealth nvim-watcher` to verify curl, git, ollama reachability,
+treesitter parsers, vendored queries, and cwd writability.
+
+vim:tw=78:ts=8:ft=help:norl:
